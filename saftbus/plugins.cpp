@@ -20,22 +20,18 @@
 
 #include "plugins.hpp"
 #include "service.hpp"
-#include "loop.hpp"
 
 // #include <ltdl.h> // need libltdl for this
-#include <dlfcn.h>
+#include <dlfcn.h> // need libdl for this
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
-#include <set>
+#include <memory>
 
 namespace saftbus {
 
 	extern "C" typedef void (*create_services_function) (saftbus::Container *container, const std::vector<std::string> &args);
 
 	struct LibraryLoader::Impl {
-		// lt_dlhandle handle;
 		void *handle;
 		saftbus::Container *cont;
 		create_services_function create_services;
@@ -43,13 +39,8 @@ namespace saftbus {
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
-		: d(new Impl)
+		: d(std::make_unique<Impl>())
 	{
-		d->cont = nullptr;
-		int result = 0;//lt_dlinit();
-		assert(result == 0);
-
-
 		// d->handle = lt_dlopen(so_filename.c_str());
 		d->handle = dlopen(so_filename.c_str(), RTLD_NOW|RTLD_GLOBAL);
 
@@ -79,9 +70,6 @@ namespace saftbus {
 		if (d->handle != nullptr) {
 			// lt_dlclose(d->handle);
 			dlclose(d->handle);
-		}		
-		int result = 0;//lt_dlexit();
-		assert(result == 0);
+		}
 	}
-
 }
